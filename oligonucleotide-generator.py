@@ -56,18 +56,17 @@ def generate_oligonucleotides(peptide_sequences):
     results = []
 
     for name, peptide_seq in peptide_sequences:
-        peptide_seq_with_ns = "NS" + peptide_seq
 
-        codons = optimize_sequence(peptide_seq_with_ns)
+        codons = optimize_sequence(peptide_seq)
 
-        sense_seq = "AATTCT" + "".join(codons) + "TAA"  # add stop codon
+        sense_seq = "AATTCT" + "".join(codons) + "TA"  # add stop codon
 
         antisense_seq = (
-            "AGCTTAGCA"
+            "AGCTTA"
             + "".join(
                 ["NNM" if aa == "X" else ecoli_codon_usage[aa] for aa in peptide_seq]
             )
-            + "GCAAG"
+            + "AG"
         )
 
         # store results
@@ -82,25 +81,25 @@ def generate_oligonucleotides(peptide_sequences):
 
     return results
 
+example_input = "RPAR\tGRPARPAR\niRGD\tCRGDKGPDC\ncx7c\tCXXXXXXXC"
 
 st.title("Custom oligo generator")
 
-st.subheader("Paste your data below (tab-separated, Name and Peptide Sequence):")
-example_input = "RPAR\tGRPARPAR\niRGD\tCRGDKGPDC\ncx7c\tCXXXXXXXC"
+st.subheader("Paste your data below (tab or comma-separated, Name and Peptide Sequence):")
 raw_data = st.text_area("Example input:", example_input, height=200)
 
 run_button = st.button("Generate Oligonucleotides")
-
 
 if raw_data:
     peptide_sequences = []
     try:
         for line in raw_data.strip().split("\n"):
-            parts = line.split("\t")
+            # Try tab first, then comma if tab fails
+            parts = line.split("\t") if "\t" in line else line.split(",")
             if len(parts) == 2:
-                peptide_sequences.append((parts[0], parts[1]))
+                peptide_sequences.append((parts[0].strip(), parts[1].strip()))
             else:
-                st.error("Each line must contain exactly two tab-separated columns.")
+                st.error("Each line must contain exactly two columns separated by tab or comma.")
     except Exception as e:
         st.error(f"Error parsing input: {e}")
 
@@ -122,7 +121,7 @@ st.markdown(
     """
     # **More info**
 
-    This tool generates sense and antisense oligonucleotides for constructing phage display libraries or cloning individual peptide sequences. The process involves encoding your peptide sequences into dna oligonucleotides that are optimized for *e. coli k12* codon usage. This ensures efficient expression of your peptides in bacterial systems.
+    This tool generates sense and antisense oligonucleotides for constructing phage display libraries or cloning individual peptide sequences. The process involves encoding your peptide sequences into dna oligonucleotides that are optimized for *e. coli k12* codon usage.
 
     ## **How it works**
     Phage libraries are constructed by inserting random or specific peptide sequences into a vector (e.g., t7select vectors from novagen). The peptide sequences are back-translated into DNA sequences, which must meet specific requirements for compatibility with the vector:
@@ -152,6 +151,7 @@ st.markdown(
     iRGD CRGDKGPDC 
     cx7c CXXXXXXXC
     ```
+    PS! You can also use comma separated values.
 
     2. The tool will:
     - back-translate the peptides into optimized dna oligonucleotides.
