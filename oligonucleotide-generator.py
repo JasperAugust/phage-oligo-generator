@@ -2,29 +2,28 @@ import streamlit as st
 import pandas as pd
 from Bio.Seq import Seq
 
-# codon optimization table for e. coli k12
 ecoli_codon_usage = {
-    "A": "GCT",
-    "R": "CGT",
-    "N": "AAT",
+    "A": "GCG",
+    "R": "CGC",
+    "N": "AAC",
     "D": "GAT",
     "C": "TGC",
-    "Q": "CAA",
+    "Q": "CAG",
     "E": "GAA",
-    "G": "GGT",
+    "G": "GGC",
     "H": "CAT",
     "I": "ATT",
-    "L": "CTT",
+    "L": "CTG",
     "K": "AAA",
     "M": "ATG",
     "F": "TTT",
-    "P": "CCT",
+    "P": "CCG",
     "S": "TCT",
-    "T": "ACT",
+    "T": "ACC",
     "W": "TGG",
     "Y": "TAT",
-    "V": "GTT",
-    "X": "NNK",  # variability placeholder for degenerate codons
+    "V": "GTG",
+    "X": "NNK",  # any amino acid (used in degenerate codon scenarios)
 }
 
 
@@ -43,33 +42,15 @@ def optimize_sequence(peptide_seq):
 
 
 def generate_oligonucleotides(peptide_sequences):
-    """
-    Generates sense and antisense oligonucleotides for given peptide sequences,
-    optimized for e. coli codons.
-
-    Parameters:
-        peptide_sequences (list): List of tuples with (name, peptide sequence).
-
-    Returns:
-        list: List of dictionaries with oligonucleotide sequences.
-    """
     results = []
 
     for name, peptide_seq in peptide_sequences:
-
         codons = optimize_sequence(peptide_seq)
+        peptide_dna = "".join(codons)
 
-        sense_seq = "AATTCT" + "".join(codons) + "TA"  # add stop codon
+        sense_seq = "AATTCT" + peptide_dna + "TA"  # add stop codon and overhangs
+        antisense_seq = "AGCTTA" + str(Seq(peptide_dna).reverse_complement()) + "AG"
 
-        antisense_seq = (
-            "AGCTTA"
-            + "".join(
-                ["NNM" if aa == "X" else ecoli_codon_usage[aa] for aa in peptide_seq]
-            )
-            + "AG"
-        )
-
-        # store results
         results.append(
             {
                 "Name": name,
@@ -81,11 +62,14 @@ def generate_oligonucleotides(peptide_sequences):
 
     return results
 
+
 example_input = "RPAR\tGRPARPAR\niRGD\tCRGDKGPDC\ncx7c\tCXXXXXXXC"
 
 st.title("Custom oligo generator")
 
-st.subheader("Paste your data below (tab or comma-separated, Name and Peptide Sequence):")
+st.subheader(
+    "Paste your data below (tab or comma-separated, Name and Peptide Sequence):"
+)
 raw_data = st.text_area("Example input:", example_input, height=200)
 
 run_button = st.button("Generate Oligonucleotides")
@@ -99,7 +83,9 @@ if raw_data:
             if len(parts) == 2:
                 peptide_sequences.append((parts[0].strip(), parts[1].strip()))
             else:
-                st.error("Each line must contain exactly two columns separated by tab or comma.")
+                st.error(
+                    "Each line must contain exactly two columns separated by tab or comma."
+                )
     except Exception as e:
         st.error(f"Error parsing input: {e}")
 
