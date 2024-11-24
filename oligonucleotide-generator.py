@@ -1,4 +1,6 @@
 import streamlit as st
+
+st.set_page_config(layout="wide")
 import pandas as pd
 from Bio.Seq import Seq
 
@@ -41,6 +43,27 @@ def optimize_sequence(peptide_seq):
     return codons
 
 
+def reverse_complement_dna(seq):
+    """
+    Returns the reverse complement of a DNA sequence with degenerate bases.
+    For NNK codons, returns MNN instead of complementing individual bases.
+    """
+    # Split into codons
+    codons = [seq[i : i + 3] for i in range(0, len(seq), 3)]
+
+    reverse_complement_codons = []
+    for codon in codons:
+        if codon == "NNK":
+            reverse_complement_codons.append("MNN")
+        else:
+            # Regular DNA complement for non-degenerate codons
+            complement_map = {"A": "T", "T": "A", "G": "C", "C": "G"}
+            rev_comp = "".join(complement_map[base] for base in codon[::-1])
+            reverse_complement_codons.append(rev_comp)
+
+    return "".join(reverse_complement_codons[::-1])  # Reverse the order of codons
+
+
 def generate_oligonucleotides(peptide_sequences):
     results = []
 
@@ -48,8 +71,9 @@ def generate_oligonucleotides(peptide_sequences):
         codons = optimize_sequence(peptide_seq)
         peptide_dna = "".join(codons)
 
-        sense_seq = "AATTCT" + peptide_dna + "TA"  # add stop codon and overhangs
-        antisense_seq = "AGCTTA" + str(Seq(peptide_dna).reverse_complement()) + "AG"
+        # sense and antisense sequences
+        sense_seq = "AATTCT" + peptide_dna + "TA"
+        antisense_seq = "AGCTT" + reverse_complement_dna(peptide_dna) + "AG"
 
         results.append(
             {
