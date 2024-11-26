@@ -68,21 +68,32 @@ def generate_oligonucleotides(peptide_sequences):
     results = []
 
     for name, peptide_seq in peptide_sequences:
-        codons = optimize_sequence(peptide_seq)
-        peptide_dna = "".join(codons)
+        try:
+            codons = optimize_sequence(peptide_seq)
+            peptide_dna = "".join(codons)
 
-        # sense and antisense sequences
-        sense_seq = "AATTCT" + peptide_dna + "TA"
-        antisense_seq = "AGCTT" + reverse_complement_dna(peptide_dna) + "AG"
+            # sense and antisense sequences
+            sense_seq = "AATTCT" + peptide_dna + "TA"
+            antisense_seq = "AGCTT" + reverse_complement_dna(peptide_dna) + "AG"
 
-        results.append(
-            {
-                "Name": name,
-                "Peptide Sequence": peptide_seq,
-                "Sense Oligonucleotide (5'-3')": f"5'Phos-{sense_seq}",
-                "Antisense Oligonucleotide (5'-3')": f"5'Phos-{antisense_seq}",
-            }
-        )
+            results.append(
+                {
+                    "Name": name,
+                    "Peptide Sequence": peptide_seq,
+                    "Sense Oligonucleotide (5'-3')": f"5'Phos-{sense_seq}",
+                    "Antisense Oligonucleotide (5'-3')": f"5'Phos-{antisense_seq}",
+                }
+            )
+        except ValueError as e:
+            results.append(
+                {
+                    "Name": name,
+                    "Peptide Sequence": peptide_seq,
+                    "Error": str(e),
+                    "Sense Oligonucleotide (5'-3')": "N/A",
+                    "Antisense Oligonucleotide (5'-3')": "N/A",
+                }
+            )
 
     return results
 
@@ -105,7 +116,15 @@ if raw_data:
             # Try tab first, then comma if tab fails
             parts = line.split("\t") if "\t" in line else line.split(",")
             if len(parts) == 2:
-                peptide_sequences.append((parts[0].strip(), parts[1].strip()))
+                name, sequence = parts[0].strip(), parts[1].strip()
+                # Validate sequence
+                invalid_aas = [aa for aa in sequence if aa not in ecoli_codon_usage]
+                if invalid_aas:
+                    st.error(
+                        f"Invalid amino acid(s) in sequence '{name}': {', '.join(invalid_aas)}. Valid amino acids are: {', '.join(sorted(ecoli_codon_usage.keys()))}"
+                    )
+                    continue
+                peptide_sequences.append((name, sequence))
             else:
                 st.error(
                     "Each line must contain exactly two columns separated by tab or comma."
