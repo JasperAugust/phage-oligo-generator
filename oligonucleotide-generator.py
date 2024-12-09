@@ -74,14 +74,14 @@ def generate_oligonucleotides(peptide_sequences):
 
             # sense and antisense sequences
             sense_seq = "AATTCT" + peptide_dna + "TA"
-            antisense_seq = "AGCTT" + reverse_complement_dna(peptide_dna) + "AG"
+            antisense_seq = "AGCTTA" + reverse_complement_dna(peptide_dna) + "AG"
 
             results.append(
                 {
                     "Name": name,
                     "Peptide Sequence": peptide_seq,
-                    "Sense Oligonucleotide (5'-3')": f"5'Phos-{sense_seq}",
-                    "Antisense Oligonucleotide (5'-3')": f"5'Phos-{antisense_seq}",
+                    "Sense Oligonucleotide (5'-3')": f"/5Phos/{sense_seq}",
+                    "Antisense Oligonucleotide (5'-3')": f"/5Phos/{antisense_seq}",
                 }
             )
         except ValueError as e:
@@ -162,7 +162,7 @@ st.markdown(
     - this ensures coverage of all possible peptide variations in your library.
 
     2. **Individual phages**:
-    - for specific peptide sequences (e.g., `CRGDKGPDC`), the tool optimizes the dna sequence for **e. coli k12 codon usage** to maximize expression efficiency.
+    - for specific peptide sequences (e.g., `CRGDKGPDC`), the tool optimizes the dna sequence for **e. coli k12 codon usage**. PS! Currently, it does not do
 
     3. **Output design**:
     - the generated oligonucleotides are synthesized with:
