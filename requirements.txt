@@ -1,1 +1,6 @@
 biopython==1.81
+sangerseq_viewer
+plotly
+matplotlib
+numpy
+pandas
