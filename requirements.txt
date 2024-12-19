@@ -1,7 +1,7 @@
 biopython==1.81
-sangerseq_viewer
-plotly
-matplotlib
-numpy
-pandas
-streamlit
+matplotlib==3.9.2
+matplotlib-inline==0.1.7
+numpy==1.26.4
+pandas==2.2.2
+plotly==5.24.1
+streamlit==1.40.1
