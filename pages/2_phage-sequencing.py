@@ -16,13 +16,22 @@ EXPECTED_CODONS = {
     "S": "TCT",
 }
 
+# Motif presets for different phage types
+MOTIF_PRESETS = {
+    "T7 Phage (MLGDPNS)": "MLGDPNS",
+    "Phage Capsid (MKLGTPN)": "MKLGTPN", 
+    "Lambda Phage (MAGDPNS)": "MAGDPNS",
+    "T4 Phage (MLGEPNS)": "MLGEPNS",
+    "Custom": None
+}
+
 
 def find_peptide(
-    sequence, motif="MLGDPNS", start_codon="ATG", next_gene_indicator="M"
+    sequence, motif="MLGDPNS", start_codon="ATG"
 ):
     """
     Searches for the peptide motif in all reading frames. Handles cases where the sequence is
-    missing a STOP codon or includes parts of the next gene.
+    missing a STOP codon by using the full available sequence length.
     Returns the peptide sequence or an appropriate error message.
     """
     try:
@@ -47,13 +56,11 @@ def find_peptide(
                         None,
                     )  # Valid peptide up to the STOP codon
                 else:
-                    # Handle cases where STOP codon is missing
-                    if next_gene_indicator in peptide:
-                        peptide = peptide.split(next_gene_indicator)[0]
+                    # Use the full available sequence when STOP codon is missing
                     return (
                         str(peptide),
                         frame,
-                        "STOP codon missing, sequence may contain the start of the next gene.",
+                        "STOP codon missing, using full available sequence length.",
                     )
 
         return None, None, "Expected sequence motif not found in any reading frame."
@@ -121,10 +128,48 @@ def plot_quality_scores(quality_scores, start, end):
     st.pyplot(plt)
 
 
-st.title("T7 Phage Peptide Sequence Analyzer with Quality Metrics")
+def validate_amino_acid_sequence(sequence):
+    """
+    Validates that the sequence contains only valid amino acid one-letter codes.
+    """
+    valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
+    return all(aa in valid_aa for aa in sequence.upper())
+
+
+st.title("Phage Peptide Sequence Analyzer with Quality Metrics")
 st.write(
     "Upload your .ab1 Sanger sequencing files to identify peptides and evaluate sequencing quality."
 )
+
+# Motif selection interface
+st.write("### Configure Peptide Motif")
+motif_option = st.selectbox(
+    "Select motif type:",
+    list(MOTIF_PRESETS.keys()),
+    help="Choose a preset motif or enter a custom sequence"
+)
+
+if motif_option == "Custom":
+    motif_sequence = st.text_input(
+        "Enter custom motif sequence:",
+        value="MLGDPNS",
+        help="Enter the amino acid sequence that marks the start of your peptide (e.g., MLGDPNS)"
+    )
+    
+    # Validate custom input
+    if motif_sequence:
+        if not validate_amino_acid_sequence(motif_sequence):
+            st.error("❌ Invalid amino acid sequence. Use standard one-letter codes (A-Z, excluding B, J, O, U, X, Z).")
+            st.stop()
+        else:
+            st.success(f"✅ Valid motif: {motif_sequence}")
+else:
+    motif_sequence = MOTIF_PRESETS[motif_option]
+    st.info(f"Selected motif: **{motif_sequence}**")
+
+# Additional parameters
+st.write("### Analysis Parameters")
+start_codon = st.text_input("Start codon:", value="ATG", help="Codon that marks the start of translation")
 
 uploaded_files = st.file_uploader(
     "Upload .ab1 files",
@@ -152,8 +197,12 @@ if uploaded_files:
             record = SeqIO.read(uploaded_file, "abi")
             nucleotide_seq = str(record.seq)
 
-            # Find peptide sequence
-            peptide, frame, error = find_peptide(nucleotide_seq)
+            # Find peptide sequence using selected motif
+            peptide, frame, error = find_peptide(
+                nucleotide_seq, 
+                motif=motif_sequence,
+                start_codon=start_codon
+            )
 
             # Extract quality metrics
             quality_metrics = extract_quality_metrics(record)
@@ -162,6 +211,7 @@ if uploaded_files:
             results.append(
                 {
                     "File Name": uploaded_file.name,
+                    "Motif Used": motif_sequence,
                     "Peptide Sequence": peptide if peptide else "Error",
                     "Peptide Error": error if error else "None",
                     "Avg Quality Score": quality_metrics.get(
@@ -189,6 +239,7 @@ if uploaded_files:
             [
                 {
                     "File Name": r["File Name"],
+                    "Motif Used": r["Motif Used"],
                     "Peptide Sequence": r["Peptide Sequence"],
                     "Peptide Error": r["Peptide Error"],
                     "Avg Quality Score": r["Avg Quality Score"],
@@ -220,7 +271,7 @@ if uploaded_files:
                 frame = result["Frame"]
                 motif_start = (
                     nucleotide_seq.find("ATG") + frame
-                )  # Start of MLGDPNS in nucleotides
+                )  # Start of motif in nucleotides
                 region_start = max(0, motif_start)
                 region_end = min(len(quality_scores), region_start + 100)
 
