@@ -18,7 +18,7 @@ EXPECTED_CODONS = {
 
 
 def find_peptide(
-    sequence, motif="MLGDPNS", start_codon="ATG", next_gene_indicator="KLAALE"
+    sequence, motif="MLGDPNS", start_codon="ATG", next_gene_indicator="M"
 ):
     """
     Searches for the peptide motif in all reading frames. Handles cases where the sequence is
@@ -26,7 +26,7 @@ def find_peptide(
     Returns the peptide sequence or an appropriate error message.
     """
     try:
-        # Iterate through all three reading frames
+        # Iterate through all three reading frames 
         for frame in range(3):
             subseq = sequence[frame:]  # Adjust for the reading frame
             translated = Seq(subseq).translate()
@@ -113,7 +113,7 @@ def plot_quality_scores(quality_scores, start, end):
     plt.plot(region_scores, label="Quality Score")
     plt.axhline(20, color="orange", linestyle="--", label="Q20 Threshold")
     plt.axhline(30, color="green", linestyle="--", label="Q30 Threshold")
-    plt.title("Quality Scores for MLGDPNS Region")
+    plt.title("Quality Scores for the region")
     plt.xlabel("Base Position (Relative to Region)")
     plt.ylabel("Quality Score")
     plt.legend()
@@ -132,6 +132,11 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True,
     key="unique_file_uploader",
 )
+# Add clear button
+if st.button("Clear Files and Data"):
+    st.session_state.clear()
+    uploaded_files = None
+    st.rerun()
 
 if uploaded_files:
     results = []

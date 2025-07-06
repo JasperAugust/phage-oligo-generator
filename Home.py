@@ -1,8 +1,8 @@
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="Phage Tools")
+st.set_page_config(layout="wide", page_title="Sequence generation & analysis Tools")
 
-st.title("Phage Analysis Tools")
+st.title("Sequence generation & analysis Tools")
 
 st.markdown(
     """
@@ -14,13 +14,13 @@ This application provides two main tools for phage analysis:
 - Optimize sequences for E. coli K12 codon usage
 - Support for degenerate codons (NNK) for library construction
 
-### 2. Phage Sequencing Analysis
+### 2. Sanger Sequencing Analysis
 - Upload and analyze .ab1 Sanger sequencing files
 - Identify peptides and evaluate sequencing quality
 - Generate quality metrics and visualizations
 
 Choose a tool from the sidebar to get started.
 
-#### Made by **Jasper August Tootsi** with ❤️
+## Made by **Jasper August Tootsi**
 """
 )
