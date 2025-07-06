@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="Sequence generation & analysis Tools")
 
-st.title("Sequence generation & analysis Tools")
+st.title("Sequence generation & analysis tools")
 
 st.markdown(
     """
