@@ -29,5 +29,5 @@ jobs:
             docker build -t oligo-app . &&
             docker stop oligo-app || true &&
             docker rm oligo-app || true &&
-            docker run -d --name oligo-app -p 80:80 oligo-app
+            docker run -d --name oligo-app -p 8080:80 oligo-app
           "
