@@ -1,0 +1,33 @@
+name: Deploy to DO Droplet
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DO_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy files to droplet
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" . ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }}:/app
+
+      - name: Build and run Docker on droplet
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }} "
+            cd /app &&
+            docker build -t oligo-app . &&
+            docker stop oligo-app || true &&
+            docker rm oligo-app || true &&
+            docker run -d --name oligo-app -p 80:80 oligo-app
+          "
